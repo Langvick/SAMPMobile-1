@@ -37,8 +37,7 @@ bool bGameInited = false;
 bool bQuitGame = false;
 uint32_t dwStartQuitTick = 0;
 
-const auto encryptedAddress = cryptor::create("40.70.19.6", 16);
-const auto encryptedPassword = cryptor::create("E2gle123123", 16);
+const auto encryptedAddress = cryptor::create("YOUR IP HERE", 16);
 unsigned short usPort = 7777;
 
 CGame *pGame = nullptr;
