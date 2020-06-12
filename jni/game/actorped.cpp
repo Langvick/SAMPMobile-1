@@ -6,7 +6,7 @@
 extern CGame *pGame;
 extern CNetGame *pNetGame;
 
-CActorPed::CActorPed(int iSkin, VECTOR vecPosition, float fRotation, float fHealth, bool bInvulnerable) {
+CActorPed::CActorPed(int iSkin, VECTOR vecPosition, float fRotation, float fHealth, bool bInvulnerable = true) {
 	Destroy();
 
 	if(!pGame->HasModelLoaded(iSkin)) {
