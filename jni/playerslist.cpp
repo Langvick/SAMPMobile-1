@@ -1,10 +1,3 @@
-/*
-
-SGBTEAM Player TAB By:FR
-
-
-*/
-
 #include "main.h"
 #include "game/game.h"
 #include "net/netgame.h"
