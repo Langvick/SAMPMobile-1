@@ -26,7 +26,6 @@ const short iNetGameVersion = 0x0FD9;
 
 uintptr_t g_libGTASA = 0;
 uintptr_t g_libSAMP = 0;
-uintptr_t g_libBASS = 0;
 const char *g_pszStorage = nullptr;
 
 bool bNetworkInited = false;
@@ -190,9 +189,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	g_libSAMP = FindLibrary("libsamp.so");
 	Log("libsamp.so image base address: 0x%X", g_libSAMP);
-	
-	g_libBASS = FindLibrary("libbass.so");
-	Log("libbass.so image base address: 0x%X", g_libBass);
 	srand(time(0));
 
 	InitHookStuff();
