@@ -21,6 +21,9 @@
 #include "checkfilehash.h"
 #include "timer.hpp"
 
+#include <dlfcn.h>
+#include "game/audiostream.h"
+
 const short iNetGameCookie = 0x6969;
 const short iNetGameVersion = 0x0FD9;
 
@@ -36,6 +39,7 @@ uint32_t dwStartQuitTick = 0;
 
 const auto encryptedAddress = cryptor::create("YOUR IP HERE", 16);
 unsigned short usPort = 7777;
+constexpr auto unique_library_path = cryptor::create("libsamp.so",11);
 
 CGame *pGame = nullptr;
 CNetGame *pNetGame = nullptr;
@@ -48,6 +52,7 @@ CGUI *pGUI = nullptr;
 CKeyBoard *pKeyBoard = nullptr;
 CExtraKeyBoard *pExtraKeyBoard = nullptr;
 CSettings *pSettings = nullptr;
+CAudioStream *pAudioStream = nullptr;
 
 void InitHookStuff();
 void InstallSpecialHooks();
@@ -87,6 +92,8 @@ void InitInMenu() {
 	pPlayersList = new CPlayersList();
 	pSpawnScreen = new CSpawnScreen();
 	pPlayerTags = new CPlayerTags();
+	
+	pAudioStream = new CAudioStream();
 }
 
 void InitInGame() {
@@ -94,6 +101,7 @@ void InitInGame() {
 		pGame->InitInGame();
 		pGame->SetMaxStats();
 		InitModelPreviewStuff();
+		pAudioStream->Initialize();
 
 		bGameInited = true;
 	}
@@ -189,7 +197,13 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	g_libSAMP = FindLibrary("libsamp.so");
 	Log("libsamp.so image base address: 0x%X", g_libSAMP);
+	
+	Log("Loading Bass Library");
+	LoadBassLibrary();
+	
 	srand(time(0));
+	
+	
 
 	InitHookStuff();
 	InitRenderWareFunctions();
@@ -232,6 +246,39 @@ void Log(const char *fmt, ...) {
 
 	return;
 }
+
+int (*BASS_Init)(uint32_t, uint32_t, uint32_t);
+int (*BASS_Free)(void);
+int (*BASS_SetConfigPtr)(uint32_t, const char*);
+int (*BASS_SetConfig)(uint32_t, uint32_t);
+int (*BASS_ChannelStop)(uint32_t);
+int (*BASS_StreamCreateURL)(char*, uint32_t, uint32_t, uint32_t);
+int (*BASS_ChannelPlay)(uint32_t);
+int *BASS_ChannelGetTags;
+int *BASS_ChannelSetSync;
+int *BASS_StreamGetFilePosition;
+int (*BASS_StreamFree)(uint32_t);
+
+void LoadBassLibrary()
+{
+	void* v0 = dlopen("/data/data/com.rockstargames.gtasa/lib/libbass.so", 1);
+	if ( !v0 )
+	{
+		Log("%s", dlerror());
+	}
+	BASS_Init = (int (*)(uint32_t, uint32_t, uint32_t))dlsym(v0, "BASS_Init");
+	BASS_Free = (int (*)(void))dlsym(v0, "BASS_Free");
+	BASS_SetConfigPtr = (int (*)(uint32_t, const char*))dlsym(v0, "BASS_SetConfigPtr");
+	BASS_SetConfig = (int (*)(uint32_t, uint32_t))dlsym(v0, "BASS_SetConfig");
+	BASS_ChannelStop = (int (*)(uint32_t))dlsym(v0, "BASS_ChannelStop");
+	BASS_StreamCreateURL = (int (*)(char*, uint32_t, uint32_t, uint32_t))dlsym(v0, "BASS_StreamCreateURL");
+	BASS_ChannelPlay = (int (*)(uint32_t))dlsym(v0, "BASS_ChannelPlay");
+	BASS_ChannelGetTags = (int *)dlsym(v0, "BASS_ChannelGetTags");
+	BASS_ChannelSetSync = (int *)dlsym(v0, "BASS_ChannelSetSync");
+	BASS_StreamGetFilePosition = (int *)dlsym(v0, "BASS_StreamGetFilePosition");
+	BASS_StreamFree = (int (*)(uint32_t))dlsym(v0, "BASS_StreamFree");
+}
+
 
 uint32_t GetTickCount() {
 	struct timeval tv;
