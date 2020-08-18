@@ -3,11 +3,13 @@
 #include "netgame.h"
 #include "chatwindow.h"
 #include "gui/gui.h"
+#include "game/audiostream.h"
 
 extern CGame *pGame;
 extern CNetGame *pNetGame;
 extern CChatWindow *pChatWindow;
 extern CGUI *pGUI;
+extern CAudioStream *pAudioStream;
 
 void ScrDisplayGameText(RPCParameters *rpcParams)
 {
@@ -1970,6 +1972,47 @@ void ScrChatBubble(RPCParameters *rpcParams)
 	szText[byteTextLen] = '\0';
 }
 
+void ScrPlayAudioStream(RPCParameters *rpcParams)
+{
+    Log("RPC: PlayAudioStreamForPlayer");
+
+    RakNet::BitStream bsData(rpcParams->input, (rpcParams->numberOfBitsOfData / 8) + 1, false);
+
+    uint8_t byteTextLen;
+    char szURL[1024];
+
+    float X, Y, Z;
+    float fRadius;
+
+    bool bUsePos;
+
+    bsData.Read(byteTextLen);
+    bsData.Read(szURL, byteTextLen);
+
+    bsData.Read(X);
+    bsData.Read(Y);
+    bsData.Read(Z);
+
+    bsData.Read(fRadius);
+
+    bsData.Read(bUsePos);
+
+    szURL[byteTextLen] = '\0';
+
+    if(pAudioStream) pAudioStream->Play(szURL, X, Y, Z, fRadius, bUsePos);
+
+    if(pChatWindow) {
+        pChatWindow->AddInfoMessage("{FFFFFF}Audio Stream: %s", szURL);
+    }
+}
+
+void ScrStopAudioStream(RPCParameters *rpcParams)
+{
+    Log("RPC: StopAudioStreamForPlayer");
+
+    if(pAudioStream) pAudioStream->Stop(true);
+}
+
 void RegisterScriptRPCs(RakClientInterface* pRakClient)
 {
 	Log("Registering ScriptRPC's..");
@@ -2062,6 +2105,8 @@ void RegisterScriptRPCs(RakClientInterface* pRakClient)
 	pRakClient->RegisterAsRemoteProcedureCall(RPC_ScrHideMenu, ScrHideMenu);
 	
 	// pRakClient->RegisterAsRemoteProcedureCall(RPC_ScrChatBubble, ScrChatBubble);
+	pRakClient->RegisterAsRemoteProcedureCall(&RPC_PlayAudioStream, ScrPlayAudioStream);
+  	pRakClient->RegisterAsRemoteProcedureCall(&RPC_StopAudioStream, ScrStopAudioStream);
 }
 
 void UnRegisterScriptRPCs(RakClientInterface* pRakClient)
@@ -2153,4 +2198,7 @@ void UnRegisterScriptRPCs(RakClientInterface* pRakClient)
 	pRakClient->UnregisterAsRemoteProcedureCall(RPC_ScrHideMenu);
 	
 	// pRakClient->UnregisterAsRemoteProcedureCall(RPC_ScrChatBubble);
+	
+	pRakClient->UnregisterAsRemoteProcedureCall(RPC_PlayAudioStream);
+  	pRakClient->UnregisterAsRemoteProcedureCall(RPC_StopAudioStream);
 }
